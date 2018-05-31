@@ -10,6 +10,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.List;
 
 public class RegisterShortcutsKeys extends JDialog
@@ -25,25 +26,28 @@ public class RegisterShortcutsKeys extends JDialog
 
     // File Chooser
     Provider provider;
-    List<Integer> MODIFIERS;
+    public static final List<Integer> MODIFIERS = Arrays.asList(KeyEvent.VK_ALT, KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_META);
 
     //Create a file chooser
     final JFileChooser fc = new JFileChooser();
 
     public String pathToFile = null;
 
+    private RegisterShortcutsKeys thisDialog;
 
-    public RegisterShortcutsKeys(List<Integer> MODIFIERSInput, Provider providerInput)
+    public RegisterShortcutsKeys()
     {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
 
-        this.MODIFIERS = MODIFIERSInput;
-        this.provider = providerInput;
+        this.provider = Provider.getCurrentProvider(true);
 
-        final List<Integer> MODIFIERS = this.MODIFIERS;
-        final Provider provider = this.provider;
+        this.thisDialog = this;
+
+        if (provider == null) {
+            System.exit(1);
+        }
 
         buttonOK.addActionListener(new ActionListener()
         {
@@ -60,6 +64,58 @@ public class RegisterShortcutsKeys extends JDialog
                 onCancel();
             }
         });
+
+
+        // Set System Tray Icon
+        //Check the SystemTray is supported
+        if (!SystemTray.isSupported()) {
+            System.out.println("SystemTray is not supported");
+            return;
+        }
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+
+        final PopupMenu popup = new PopupMenu();
+        final TrayIcon trayIcon =
+                new TrayIcon(toolkit.getImage("../../../../../../../Images/icon.png"));
+
+        MediaTracker tracker = new MediaTracker(this);
+
+        final SystemTray tray = SystemTray.getSystemTray();
+
+        // Create a pop-up menu components
+
+        MenuItem addShortcut = new MenuItem("Add Shortcut");
+        addShortcut.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                thisDialog.setVisible(true);
+            }
+        });
+
+        MenuItem exit = new MenuItem("Exit");
+        exit.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                thisDialog.close();
+            }
+        });
+
+        //Add components to pop-up menu
+        popup.add(addShortcut);
+        popup.addSeparator();
+        popup.add(exit);
+
+        trayIcon.setPopupMenu(popup);
+
+        try {
+            tray.add(trayIcon);
+        } catch (AWTException e) {
+            System.out.println("TrayIcon could not be added.");
+        }
 
         // call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -197,5 +253,26 @@ public class RegisterShortcutsKeys extends JDialog
     {
         this.pathToFile = pathToFile;
         this.labelPath.setText((pathToFile != null) ? pathToFile : "No Program Selected");
+    }
+
+
+    public void close() {
+        System.exit(0);
+    }
+
+    public static void main(String[] args) {
+        RegisterShortcutsKeys dialog = new RegisterShortcutsKeys();
+        dialog.pack();
+        // dialog.setVisible(true);
+        // System.exit(0);
+
+        /*frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                provider.reset();
+                provider.stop();
+                System.exit(0);
+            }
+        });*/
     }
 }

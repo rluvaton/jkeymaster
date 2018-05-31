@@ -46,7 +46,7 @@ public class AWTTest {
             System.exit(1);
         }
 
-        RegisterShortcutsKeys dialog = new RegisterShortcutsKeys(MODIFIERS, provider);
+        RegisterShortcutsKeys dialog = new RegisterShortcutsKeys();
         dialog.pack();
         dialog.setVisible(true);
         // System.exit(0);
